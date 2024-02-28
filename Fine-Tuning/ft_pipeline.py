@@ -119,6 +119,14 @@ training_arguments = TrainingArguments(
     lr_scheduler_type=lr_scheduler_type,
     report_to="tensorboard",
 )
+# collate batches of tensors into a single tensor
+def data_collator(features):
+    return tokenizer.pad(
+        features,
+        padding="max_length",
+        max_length=max_seq_length,
+        truncation=True
+    )
 # SFTTrainer for supervised fine-tuning
 trainer = SFTTrainer(
     model=model,
@@ -129,6 +137,7 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     args=training_arguments,
     packing=packing,
+    data_collator=data_collator  # Add data collator
 )
 # start training
 trainer.train()
