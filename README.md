@@ -9,5 +9,6 @@ This repository contains the code implementation of the project focused on fine-
 4. **Finetuning:** Contains folders corresponding to research questions RQ1 and RQ2:
    - **RQ1:** Investigates the effectiveness of fine-tuning LLMs at low computational cost.
    - **RQ2:** Explores fine-tuning techniques tailored for educational domain dataset.
+   - **General Fine-Tuning Pipeline:** A general pipeline for fine-tuning LLMs on various tasks. This pipeline discusses different task types.
 5. **Evaluation:** Includes a notebook implementing a hybrid evaluation protocol combining human evaluations and LLMs as judges
 
