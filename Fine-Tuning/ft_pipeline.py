@@ -1,8 +1,8 @@
 # initialization
-# import necessary packages and libraries
+# importing necessary packages and libraries
 import os
 import torch
-from datasets import load_dataset  # Import dataset loading function
+from datasets import load_dataset  # dataset loading function
 from transformers import (  
     AutoModelForCausalLM,  # pre-trained model for causal language modeling if the task is causal LM
     AutoTokenizer,  # pre-trained tokenizer
@@ -13,6 +13,9 @@ from transformers import (
 )
 from peft import LoraConfig, PeftModel  # LoRA related modules
 from trl import SFTTrainer  # Supervised Fine-Tuning Trainer
+from langchain.chat_models import ChatOpenAI
+from langchain.evaluation import load_evaluator
+from pprint import pprint as print_eval
 
 # task and their corresponding pretrained models:
 # Sequence-to-sequence language modeling: AutoModelForSequenceClassification
@@ -154,3 +157,36 @@ pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_le
 # generate text based on prompt
 result = pipe(f"<s>[INST] {prompt} [/INST]")  
 print(result[0]['generated_text'])  
+
+
+
+
+# evaluating the generated text
+os.environ["OPENAI_API_KEY"] = "SK"
+assert os.environ.get("OPENAI_API_KEY") is not None, "Please set OPENAI_API_KEY environment variable"
+
+# defining the evaluation language model
+evaluation_llm = ChatOpenAI(model="gpt-3.5-turbo")
+
+# defining the generate function
+def generate(prompt, model=model, max_length=150, temperature=0.7, top_k=50, top_p=0.9):
+    base_generator = pipeline('text-generation', model=model)
+    base_sequences = base_generator(prompt, max_length=max_length, temperature=temperature, top_k=top_k, top_p=top_p)
+    base_best_sequence = base_sequences[0]['generated_text']
+    print(f"answer:\n{base_best_sequence}\n")
+    return base_best_sequence
+
+# the evaluation criteria (conciseness in this case, we can evaluate the model based on correcteness, using RAG...)
+evaluator = load_evaluator("criteria", criteria="conciseness", llm=evaluation_llm)
+
+# generating text and evaluating
+prompt = """
+Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
+Question: Who is a large language model?
+"""
+
+pred = generate(prompt)
+
+# evaluating the generated text
+eval_result = evaluator.evaluate_strings(prediction=pred, input=prompt)
+print_eval(eval_result)
